@@ -1,10 +1,12 @@
-# Build backend Docker image from backend/ and push to Docker Hub, then optionally SSH-deploy
+name: Build & Deploy Backend
+
+# Run only when backend folder changes on main branch
 on:
   push:
     branches:
       - main
     paths:
-      - 'backend/**'
+      - "backend/**"
 
 permissions:
   contents: read
@@ -12,24 +14,25 @@ permissions:
 
 jobs:
   build-and-push:
-    name: Build and push Docker image to Docker Hub
+    name: Build and push Docker image
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: docker.io
           username: ravindramodepalli23
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push image
-        uses: docker/build-push-action@v4
+      - name: Build & Push Docker image
+        uses: docker/build-push-action@v6
         with:
           context: ./backend
           push: true
@@ -38,12 +41,15 @@ jobs:
             docker.io/ravindramodepalli23/codequest-backend:latest
 
   deploy-ssh:
-    name: Optional SSH deploy to host (pull image & restart container)
+    name: Deploy to server via SSH
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ secrets.SSH_HOST != '' }}
+
+    # Only run if SSH_HOST secret is defined
+    if: ${{ secrets.SSH_HOST }}
+
     steps:
-      - name: SSH: pull image and restart container
+      - name: SSH deploy
         uses: appleboy/ssh-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -51,10 +57,14 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
-            # Adjust these commands to match your environment
+            # Pull latest backend image
             docker pull docker.io/ravindramodepalli23/codequest-backend:latest
+
+            # Stop + remove old container if exists
             docker stop codequest-backend || true
             docker rm codequest-backend || true
+
+            # Start new container
             docker run -d \
               --name codequest-backend \
               -p 3001:3000 \
