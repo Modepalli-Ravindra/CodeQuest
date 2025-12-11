@@ -1,4 +1,5 @@
-# Deploy React static build from main branch to GitHub Pages
+name: Deploy React App to GitHub Pages
+
 on:
   push:
     branches:
@@ -17,7 +18,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # If your frontend is in a subfolder, set working-directory or change path below.
       - name: Use Node.js 18
         uses: actions/setup-node@v4
         with:
@@ -27,19 +27,21 @@ jobs:
         run: npm ci
 
       - name: Build production static assets
-        # For Create React App this runs react-scripts build and outputs to ./build
         run: npm run build
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
-          # adjust if your build output is not ./build (e.g., ./out, ./public)
           path: ./build
 
   deploy:
     name: Deploy to GitHub Pages
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+        id: deployment
+        uses: actions/deploy-pages@v4
