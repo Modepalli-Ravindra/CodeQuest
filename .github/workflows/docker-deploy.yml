@@ -25,7 +25,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ravindramodepalli23
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push image
@@ -34,8 +34,8 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/codequest-backend:${{ github.sha }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/codequest-backend:latest
+            docker.io/ravindramodepalli23/codequest-backend:${{ github.sha }}
+            docker.io/ravindramodepalli23/codequest-backend:latest
 
   deploy-ssh:
     name: Optional SSH deploy to host (pull image & restart container)
@@ -52,7 +52,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             # Adjust these commands to match your environment
-            docker pull docker.io/${{ secrets.DOCKERHUB_USERNAME }}/codequest-backend:latest
+            docker pull docker.io/ravindramodepalli23/codequest-backend:latest
             docker stop codequest-backend || true
             docker rm codequest-backend || true
             docker run -d \
@@ -60,4 +60,4 @@ jobs:
               -p 3001:3000 \
               --env-file /home/${{ secrets.SSH_USER }}/.env \
               --restart unless-stopped \
-              docker.io/${{ secrets.DOCKERHUB_USERNAME }}/codequest-backend:latest
+              docker.io/ravindramodepalli23/codequest-backend:latest
